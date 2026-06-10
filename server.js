@@ -1,42 +1,22 @@
 const express = require('express');
+const cors = require('cors');
+const { port } = require('./src/config/env');
+const { errorHandler } = require('./src/middleware/error.middleware');
+const authRoutes = require('./src/routes/auth.routes');
+const userRoutes = require('./src/routes/user.routes');
+
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
-let users = [];
-let nextId = 1;
-
-app.post('/users', (req, res) => {
-  const { name, email } = req.body;
-  if (!name || !email) return res.status(400).json({ error: 'name and email required' });
-  const user = { id: nextId++, name, email };
-  users.push(user);
-  res.status(201).json(user);
+app.get('/', (req, res) => {
+  res.json({ message: 'API is running' });
 });
 
-app.get('/users', (req, res) => {
-  res.json(users);
-});
+app.use('/api/auth', authRoutes);
+app.use('/users', userRoutes);
 
-app.get('/users/:id', (req, res) => {
-  const user = users.find(u => u.id === parseInt(req.params.id));
-  if (!user) return res.status(404).json({ error: 'user not found' });
-  res.json(user);
-});
+app.use(errorHandler);
 
-app.put('/users/:id', (req, res) => {
-  const user = users.find(u => u.id === parseInt(req.params.id));
-  if (!user) return res.status(404).json({ error: 'user not found' });
-  const { name, email } = req.body;
-  if (name) user.name = name;
-  if (email) user.email = email;
-  res.json(user);
-});
-
-app.delete('/users/:id', (req, res) => {
-  const index = users.findIndex(u => u.id === parseInt(req.params.id));
-  if (index === -1) return res.status(404).json({ error: 'user not found' });
-  users.splice(index, 1);
-  res.status(204).send();
-});
-
-app.listen(3000, () => console.log('Server on http://localhost:3000'));
+app.listen(port, () => console.log(`Server on http://localhost:${port}`));
